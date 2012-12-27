@@ -42,7 +42,9 @@ ofxMarchingCubes::ofxMarchingCubes(){
 
 
 ofxMarchingCubes::~ofxMarchingCubes(){
-
+	triangles.clear();
+	data.clear();
+	trilist.clear();
 }
 
 
@@ -136,7 +138,7 @@ void ofxMarchingCubes::initResolution(int x, int y, int z){
 
 
 
-string ofxMarchingCubes::getinfo(){
+string& ofxMarchingCubes::getinfo(){
 	info = "tris: " + ofToString(ntri) + " volume: " + ofToString(gx) + " " + ofToString(gy)
 	+ " " + ofToString(gz) + " cells: " + ofToString(numxyz) + " iso: " + ofToString(isolevel);
 	return info;	

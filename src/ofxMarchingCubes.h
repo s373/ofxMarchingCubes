@@ -1,8 +1,6 @@
 /*
  
  oF marching cubes implementation by andre sier
- http://s373.net/code/marchingcubes/
- 
  Marching cubes implementation after Paul Bourke polygonize voxel.
  http://paulbourke.net/geometry/polygonise/
  
@@ -10,7 +8,7 @@
  201004 - processing version
  
  code released under http://www.gnu.org/licenses/lgpl-3.0.txt
- copyright 2012, Andre Sier
+ copyright 2012, André Sier
  http://s373.net
  
  
@@ -38,7 +36,7 @@ public:
 	void setWorldDim(float x, float y, float z);
 	void setWorldDim(const ofPoint &dim);
 	void initResolution(int x, int y, int z);
-	string getinfo();
+	string& getinfo();
 	
 	void clear();
 	void addIsoPoint(const ofPoint &ptpos, const float ptval);
