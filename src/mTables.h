@@ -1,6 +1,8 @@
 /*
  
  oF marching cubes implementation by andre sier
+ http://s373.net/code/marchingcubes/
+ 
  Marching cubes implementation after Paul Bourke polygonize voxel.
  http://paulbourke.net/geometry/polygonise/
  
@@ -8,7 +10,7 @@
  201004 - processing version
  
  code released under http://www.gnu.org/licenses/lgpl-3.0.txt
- copyright 2012, André Sier
+ copyright 2012, Andre Sier
  http://s373.net
  
  
