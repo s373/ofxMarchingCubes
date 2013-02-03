@@ -59,7 +59,8 @@ ofxMarchingCubes::~ofxMarchingCubes(){
 
 
 
-void ofxMarchingCubes::setup(float sx, float sy, float sz, int x, int y, int z){
+void ofxMarchingCubes::setup(const float sx, const float sy, const float sz, 
+							 const int x, const int y, const int z){
 
 	initResolution(x, y, z);
 	setWorldDim(sx, sy, sz);
@@ -82,7 +83,7 @@ void ofxMarchingCubes::setup(float sx, float sy, float sz, int x, int y, int z){
 
 
 
-void ofxMarchingCubes::setWorldDim(float x, float y, float z){
+void ofxMarchingCubes::setWorldDim(const float x,const float y,const  float z){
 	worlddim.set(x, y, z);
 	worldstride.set(gx / x, gy / y, gz / z);
 	datastride.set(x / gx, y / gy, z / gz);
@@ -108,7 +109,7 @@ void ofxMarchingCubes::setWorldDim(const ofPoint &dim) {
 
 
 
-void ofxMarchingCubes::initResolution(int x, int y, int z){
+void ofxMarchingCubes::initResolution(const int x,const  int y,const  int z){
 	gx = x;
 	gy = y;
 	gz = z;
@@ -472,7 +473,7 @@ void ofxMarchingCubes::zeroData() {
 
 
 
-void ofxMarchingCubes::setRndData(float mx) {
+void ofxMarchingCubes::setRndData(const float mx) {
 	for (int i = 0; i < numxyz; i++) {
 		data[i] = ofRandom(mx);
 	}
@@ -486,7 +487,7 @@ void ofxMarchingCubes::setRndData(float mx) {
 
 
 
-void ofxMarchingCubes::setRndData(float mn, float mx) {
+void ofxMarchingCubes::setRndData(const float mn,const float mx) {
 	for (int i = 0; i < numxyz; i++) {
 		data[i] = ofRandom(mn, mx);
 	}
@@ -808,10 +809,12 @@ void ofxMarchingCubes::draw() {
 	}
 	
 	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
 	glNormalPointer(GL_FLOAT, 3, &normpts[0]);
 	glVertexPointer(3, GL_FLOAT, 0, &tripts[0]);
 	glDrawArrays(GL_TRIANGLES, 0, (int)trilist.size()*3);
 	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
 	
 	
 //	for(int i=0; i<trilist.size(); i++){
@@ -831,7 +834,7 @@ void ofxMarchingCubes::draw() {
 
 
 
-void ofxMarchingCubes::drawnormals(float s) {
+void ofxMarchingCubes::drawnormals(const float s) {
 	
 	
 	
@@ -875,18 +878,18 @@ void ofxMarchingCubes::drawnormals(float s) {
 
 
 
-void ofxMarchingCubes::readStl(string fn) {
+void ofxMarchingCubes::readStl(const string &fn) {
 	readBinaryStl(fn);	
 }
 
 
-void ofxMarchingCubes::saveStl(string fn) {
+void ofxMarchingCubes::saveStl(const string &fn) {
 	saveBinaryStl(fn);	
 }
 
 
 
-void ofxMarchingCubes::saveBinaryStl(string fn) {
+void ofxMarchingCubes::saveBinaryStl(const string &fn) {
 	//		UINT8[80] – Header
 	//		UINT32 – Number of triangles
 	//		
@@ -928,7 +931,7 @@ void ofxMarchingCubes::saveBinaryStl(string fn) {
 		myfile.write((char *)&atribute,sizeof(short));		
 	}
 	
-	myfile.write(header.c_str(), sizeof(char)*80);		
+//	myfile.write(header.c_str(), sizeof(char)*80);		
 	myfile.close();
 	
 	cout << "ofxMarchingCubes saved binary " << fn << " tris: "<< trilist.size() <<  endl;
@@ -936,7 +939,7 @@ void ofxMarchingCubes::saveBinaryStl(string fn) {
 	
 }
 
-void ofxMarchingCubes::readBinaryStl(string fn) {
+void ofxMarchingCubes::readBinaryStl(const string &fn) {
 
 	string file = ofToDataPath(fn, true);	
 	ifstream stl_file(file.c_str(), ios::in | ios::binary);		
@@ -946,7 +949,7 @@ void ofxMarchingCubes::readBinaryStl(string fn) {
 	}else{		
 		int	through = 0;		
 		char h[80];		
-		for(int i=0;i<80;i++){ stl_file.read((char *)&h, sizeof(char)); }		
+		for(int i=0;i<80;i++){ stl_file.read((char *)&h[i], sizeof(char)); }		
 		cout << h << endl;
 		
 		int numtris;
@@ -1085,7 +1088,7 @@ void ofxMarchingCubes::readBinaryStl(string fn) {
 
 
 	
- int	ofxMarchingCubes::Polygonize(mGridCell grid,  float isolevel, vector <mTriangle> &triangles) {
+ int	ofxMarchingCubes::Polygonize(const mGridCell grid,const float isolevel,  vector <mTriangle> &triangles) {
 	int i, ntriang;
 	int cubeindex;
 	ofPoint vertlist[12];// = new ofPoint[12];
@@ -1193,7 +1196,7 @@ void ofxMarchingCubes::readBinaryStl(string fn) {
  * Linearly interpolate the position where an isosurface cuts an edge
  * between two vertices, each with their own scalar value
  */
-ofVec3f ofxMarchingCubes::VertexInterp(float isolevel, ofVec3f &p1, ofVec3f &p2, float valp1, float valp2){
+ofVec3f ofxMarchingCubes::VertexInterp(const float isolevel,const  ofVec3f &p1,const  ofVec3f &p2,const  float valp1,const float valp2){
 
 	float mu;
 	ofPoint p(0,0,0);

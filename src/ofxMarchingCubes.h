@@ -32,10 +32,10 @@ public:
 	ofxMarchingCubes();
 	~ofxMarchingCubes();
 		
-	void setup(float sx, float sy, float sz, int x, int y, int z);
-	void setWorldDim(float x, float y, float z);
+	void setup(const float sx, const float sy, const float sz, const int x, const int y,const  int z);
+	void setWorldDim(const float x,const  float y, const float z);
 	void setWorldDim(const ofPoint &dim);
-	void initResolution(int x, int y, int z);
+	void initResolution(const int x, const int y, const int z);
 	string& getinfo();
 	
 	void clear();
@@ -48,8 +48,8 @@ public:
 	void addBall(const int centerx, const int centery, const int centerz,
 				 const int dimx, const int dimy, const int dimz, const float ptval);
 	void zeroData();
-	void setRndData(float mn, float mx);
-	void setRndData(float mx);
+	void setRndData(const float mn, const float mx);
+	void setRndData(const float mx);
 	
 	void setData(const vector <float> &d);
 	void addData(const vector <float> &d);
@@ -69,19 +69,19 @@ public:
 	void checkMinMax();
 	
 	void draw();
-	void drawnormals(float s);
+	void drawnormals(const float s);
 	
-	void readStl(string fn);
-	void saveStl(string fn);
-	void readBinaryStl(string fn);
-	void saveBinaryStl(string fn);
+	void readStl(const string &fn);
+	void saveStl(const string &fn);
+	void readBinaryStl(const string &fn);
+	void saveBinaryStl(const string &fn);
 //	void readAsciiStl(string fn);
 //	void saveAsciiStl(string fn);
 	
 private:	
-	 int Polygonize(mGridCell grid,  float isolevel, vector <mTriangle> &triangles);
+	 int Polygonize(const mGridCell grid, const  float isolevel, vector <mTriangle> &triangles);
 	 int getIndex(const ofPoint &ptpos);
-	ofVec3f VertexInterp(float isolevel, ofVec3f &p1, ofVec3f &p2, float valp1, float valp2);	
+	ofVec3f VertexInterp(const float isolevel, const ofVec3f &p1, const ofVec3f &p2, const float valp1, const float valp2);	
 	
 public:		
 	mGridCell grid;
