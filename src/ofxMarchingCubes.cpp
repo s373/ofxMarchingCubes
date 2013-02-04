@@ -796,6 +796,10 @@ void ofxMarchingCubes::draw() {
 	for(int i=0; i<trilist.size(); i++){
 		normpts.push_back(trilist[i].n.x);
 		normpts.push_back(trilist[i].n.y);
+		normpts.push_back(trilist[i].n.z);		normpts.push_back(trilist[i].n.x);
+		normpts.push_back(trilist[i].n.y);
+		normpts.push_back(trilist[i].n.z);		normpts.push_back(trilist[i].n.x);
+		normpts.push_back(trilist[i].n.y);
 		normpts.push_back(trilist[i].n.z);
 		tripts.push_back(trilist[i].p[0].x);
 		tripts.push_back(trilist[i].p[0].y);
@@ -809,8 +813,9 @@ void ofxMarchingCubes::draw() {
 	}
 	
 	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, &tripts[0]);
 	glEnableClientState(GL_NORMAL_ARRAY);
-	glNormalPointer(GL_FLOAT, 3, &normpts[0]);
+	glNormalPointer(GL_FLOAT, 0, &normpts[0]);
 	glVertexPointer(3, GL_FLOAT, 0, &tripts[0]);
 	glDrawArrays(GL_TRIANGLES, 0, (int)trilist.size()*3);
 	glDisableClientState(GL_VERTEX_ARRAY);
