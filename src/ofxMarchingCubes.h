@@ -92,7 +92,7 @@ public:
 	int ntri;
 	int gx, gy, gz, numxyz, gxgy;
 	float themin, themax;
-	bool invertnormals;
+	bool invertnormals, normalize;
 	bool closesides;
 	
 	ofPoint worlddim, worldstride, worldcenter, datastride;

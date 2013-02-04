@@ -21,7 +21,8 @@ ofxMarchingCubes::ofxMarchingCubes(){
 	ntri=0;
 	gx = gy = gz = numxyz = gxgy = 0;
 	themin = themax = 0;
-	invertnormals = true;
+	invertnormals = false;
+	normalize = true;
 	closesides = true;		
 	mcZhead = mcZMax = 0;
 	mcZheadf = 0;
@@ -259,7 +260,7 @@ void ofxMarchingCubes::addCube(const ofPoint &ptpos, const ofPoint &ptdim, const
 
 
 void ofxMarchingCubes::addCube( const int centerx, const int centery,const int centerz,
-							   const int dimx, const int dimy, int dimz, const float val) {
+							   const int dimx, const int dimy, const int dimz, const float val) {
 	int hx = dimx / 2;
 	int hy = dimy / 2;
 	int hz = dimz / 2;
@@ -371,7 +372,7 @@ void ofxMarchingCubes::addBall(const ofPoint &ptpos, const ofPoint &ptdim, const
 
 
 void ofxMarchingCubes::addBall( const int centerx, const int centery,const int centerz,
-							   const int dimx, const int dimy, int dimz, const float val) {
+							   const int dimx, const int dimy, const int dimz, const float val) {
 	int hx = dimx / 2;
 	int hy = dimy / 2;
 	int hz = dimz / 2;
@@ -710,7 +711,7 @@ void ofxMarchingCubes::polygoniseData() {
 				
 				// calc tri norms
 				for (int a0 = 0; a0 < n; a0++) {
-					triangles[a0].calcnormal(invertnormals);
+					triangles[a0].calcnormal(invertnormals, normalize);
 				}
 				
 				
@@ -813,7 +814,6 @@ void ofxMarchingCubes::draw() {
 	}
 	
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, &tripts[0]);
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glNormalPointer(GL_FLOAT, 0, &normpts[0]);
 	glVertexPointer(3, GL_FLOAT, 0, &tripts[0]);
