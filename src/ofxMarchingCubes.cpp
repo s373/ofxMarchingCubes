@@ -23,7 +23,7 @@ ofxMarchingCubes::ofxMarchingCubes(){
 	themin = themax = 0;
 	invertnormals = false;
 	normalize = true;
-	closesides = true;		
+	closesides = true;
 	mcZhead = mcZMax = 0;
 	mcZheadf = 0;
 	mcZheadSpeed = 0.001;
@@ -31,6 +31,8 @@ ofxMarchingCubes::ofxMarchingCubes(){
 	for(int i=0; i<72; i++){
 		header += (char)ofRandom(48,90);
 	}
+	boundmode = ADD;
+	om = 0;
 }
 
 
@@ -60,7 +62,7 @@ ofxMarchingCubes::~ofxMarchingCubes(){
 
 
 
-void ofxMarchingCubes::setup(const float sx, const float sy, const float sz, 
+void ofxMarchingCubes::setup(const float sx, const float sy, const float sz,
 							 const int x, const int y, const int z){
 
 	initResolution(x, y, z);
@@ -71,10 +73,10 @@ void ofxMarchingCubes::setup(const float sx, const float sy, const float sz,
 		mTriangle tri;
 		triangles.push_back( tri );
 	}
-	isolevel = 0.0025f;
+	// isolevel = 0.0025f;
 
 	polygoniseData();
-	cout << getinfo() << endl;
+	// cout << getinfo() << endl;
 }
 
 
@@ -89,7 +91,7 @@ void ofxMarchingCubes::setWorldDim(const float x,const float y,const  float z){
 	worldstride.set(gx / x, gy / y, gz / z);
 	datastride.set(x / gx, y / gy, z / gz);
 	worldcenter.set(x/2.0f, y/2.0f, z/2.0f);
-	
+
 }
 
 
@@ -115,7 +117,7 @@ void ofxMarchingCubes::initResolution(const int x,const  int y,const  int z){
 	gy = y;
 	gz = z;
 	gxgy = x * y;
-	numxyz = x * y * z;	
+	numxyz = x * y * z;
 
 	data.clear();
 	data.reserve(numxyz);
@@ -123,11 +125,11 @@ void ofxMarchingCubes::initResolution(const int x,const  int y,const  int z){
 		data.push_back( 0.0f );
 	}
 	trilist.clear();
-	
+
 	mcZhead = 0;
 	mcZMax = gz;
 	mcZheadf = 0;
-	
+
 }
 
 
@@ -141,9 +143,9 @@ void ofxMarchingCubes::initResolution(const int x,const  int y,const  int z){
 
 
 string& ofxMarchingCubes::getinfo(){
-	info = "tris: " + ofToString(ntri) + " volume: " + ofToString(gx) + " " + ofToString(gy)
+	info = "ofxMarchingCubes-"+ofToString(this) + " tris: " + ofToString(ntri) + " volume: " + ofToString(gx) + " " + ofToString(gy)
 	+ " " + ofToString(gz) + " cells: " + ofToString(numxyz) + " iso: " + ofToString(isolevel);
-	return info;	
+	return info;
 }
 
 
@@ -157,7 +159,7 @@ string& ofxMarchingCubes::getinfo(){
 
 
 void ofxMarchingCubes::clear(){
-	zeroData();	
+	zeroData();
 }
 
 
@@ -168,8 +170,7 @@ void ofxMarchingCubes::clear(){
 
 
 void ofxMarchingCubes::addIsoPoint(const ofPoint &ptpos, const float ptval){
-	int idx = getIndex(ptpos);
-	data[idx] += ptval;
+	addDataIdx(getIndex(ptpos),ptval);
 }
 
 
@@ -180,7 +181,7 @@ void ofxMarchingCubes::addIsoPoint(const ofPoint &ptpos, const float ptval){
 
 
 void ofxMarchingCubes::addIsoPoint(const int idx, const float ptval){
-	data[idx] += ptval;
+		addDataIdx(idx,ptval);
 }
 
 
@@ -191,11 +192,11 @@ void ofxMarchingCubes::addIsoPoint(const int idx, const float ptval){
 
 
 void ofxMarchingCubes::addCube(const ofPoint &ptpos, const ofPoint &ptdim, const float ptval){
-	// replace this getindex	
+	// replace this getindex
 	int cx = (int) (ptpos.x * worldstride.x);
 	int cy = (int) (ptpos.y * worldstride.y);
 	int cz = (int) (ptpos.z * worldstride.z);
-	
+
 	if (closesides) {
 		if (cx < 1) {
 			cx = 1;
@@ -235,11 +236,11 @@ void ofxMarchingCubes::addCube(const ofPoint &ptpos, const ofPoint &ptdim, const
 			cz = gz - 1;
 		}
 	}
-	
-	int dimx = (int) (ptdim.x * worldstride.x); 
+
+	int dimx = (int) (ptdim.x * worldstride.x);
 	int dimy = (int) (ptdim.y * worldstride.y);
 	int dimz = (int) (ptdim.z * worldstride.z);
-	
+
 	if (dimx < 2) {
 		dimx = 2;
 	}
@@ -264,11 +265,11 @@ void ofxMarchingCubes::addCube( const int centerx, const int centery,const int c
 	int hx = dimx / 2;
 	int hy = dimy / 2;
 	int hz = dimz / 2;
-	
+
 	int sx = centerx - hx;
 	int sy = centery - hy;
 	int sz = centerz - hz;
-	
+
 	if (sx < 1) {
 		sx = 1;
 	}
@@ -278,17 +279,17 @@ void ofxMarchingCubes::addCube( const int centerx, const int centery,const int c
 	if (sz < 1) {
 		sz = 1;
 	}
-	
+
 	int tx = MIN(centerx + hx, gx - 1);
 	int ty = MIN(centery + hy, gy - 1);
 	int tz = MIN(centerz + hz, gz - 1);
-	
+
 	int idx = 0;
 	for (int i = sx; i < tx; i++) {
 		for (int j = sy; j < ty; j++) {
 			for (int k = sz; k < tz; k++) {
 				idx = i + j * gx + k * gxgy;
-				data[idx] += val;
+				addDataIdx(idx,val);
 			}
 		}
 	}
@@ -303,11 +304,11 @@ void ofxMarchingCubes::addCube( const int centerx, const int centery,const int c
 
 
 void ofxMarchingCubes::addBall(const ofPoint &ptpos, const ofPoint &ptdim, const float ptval){
-	// replace this getindex	
+	// replace this getindex
 	int cx = (int) (ptpos.x * worldstride.x);
 	int cy = (int) (ptpos.y * worldstride.y);
 	int cz = (int) (ptpos.z * worldstride.z);
-	
+
 	if (closesides) {
 		if (cx < 1) {
 			cx = 1;
@@ -347,11 +348,11 @@ void ofxMarchingCubes::addBall(const ofPoint &ptpos, const ofPoint &ptdim, const
 			cz = gz - 1;
 		}
 	}
-	
-	int dimx = (int) (ptdim.x * worldstride.x); 
+
+	int dimx = (int) (ptdim.x * worldstride.x);
 	int dimy = (int) (ptdim.y * worldstride.y);
 	int dimz = (int) (ptdim.z * worldstride.z);
-	
+
 	if (dimx < 2) {
 		dimx = 2;
 	}
@@ -376,11 +377,11 @@ void ofxMarchingCubes::addBall( const int centerx, const int centery,const int c
 	int hx = dimx / 2;
 	int hy = dimy / 2;
 	int hz = dimz / 2;
-	
+
 	int sx = centerx - hx;
 	int sy = centery - hy;
 	int sz = centerz - hz;
-	
+
 	if (sx < 1) {
 		sx = 1;
 	}
@@ -390,11 +391,11 @@ void ofxMarchingCubes::addBall( const int centerx, const int centery,const int c
 	if (sz < 1) {
 		sz = 1;
 	}
-	
+
 	int tx = MIN(centerx + hx, gx - 1);
 	int ty = MIN(centery + hy, gy - 1);
 	int tz = MIN(centerz + hz, gz - 1);
-	
+
 	int idx = 0;
 	ofPoint delta, target, src(centerx*worlddim.x, centery*worlddim.y, centerz*worlddim.z);
 	for (int i = sx; i < tx; i++) {
@@ -404,7 +405,7 @@ void ofxMarchingCubes::addBall( const int centerx, const int centery,const int c
 				target.set(i*worlddim.x, j*worlddim.y, k*worlddim.z);
 				delta = target-src;
 				float fval = val / delta.length();
-				data[idx] += fval;
+				addDataIdx(idx,fval);
 			}
 		}
 	}
@@ -416,46 +417,6 @@ void ofxMarchingCubes::addBall( const int centerx, const int centery,const int c
 
 
 
-//
-//
-//void ofxMarchingCubes::addCube( const int centerx, const int centery,const int centerz,
-//							   const int dimx, const int dimy, int dimz, const float val) {
-//	int hx = dimx / 2;
-//	int hy = dimy / 2;
-//	int hz = dimz / 2;
-//	
-//	int sx = centerx - hx;
-//	int sy = centery - hy;
-//	int sz = centerz - hz;
-//	
-//	if (sx < 1) {
-//		sx = 1;
-//	}
-//	if (sy < 1) {
-//		sy = 1;
-//	}
-//	if (sz < 1) {
-//		sz = 1;
-//	}
-//	
-//	int tx = MIN(centerx + hx, gx - 1);
-//	int ty = MIN(centery + hy, gy - 1);
-//	int tz = MIN(centerz + hz, gz - 1);
-//	
-//	int idx = 0;
-//	for (int i = sx; i < tx; i++) {
-//		for (int j = sy; j < ty; j++) {
-//			for (int k = sz; k < tz; k++) {
-//				idx = i + j * gx + k * gxgy;
-//				data[idx] += val;
-//			}
-//		}
-//	}
-//}
-//
-//
-//
-
 
 
 
@@ -464,8 +425,10 @@ void ofxMarchingCubes::addBall( const int centerx, const int centery,const int c
 void ofxMarchingCubes::zeroData() {
 	for (int i = 0; i < numxyz; i++) {
 		data[i] = 0.0f;
-	}	
+	}
 }
+
+
 
 
 
@@ -479,6 +442,7 @@ void ofxMarchingCubes::setRndData(const float mx) {
 		data[i] = ofRandom(mx);
 	}
 }
+
 
 
 
@@ -502,12 +466,35 @@ void ofxMarchingCubes::setRndData(const float mn,const float mx) {
 
 
 
+void ofxMarchingCubes::setProbRndData(const float prob,const float mn,const float mx) {
+	for (int i = 0; i < numxyz; i++) {
+		if(ofRandom(1)<prob){
+			data[i] = ofRandom(mn, mx);
+		} else {
+			data[i] = 0.0f;
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
 void ofxMarchingCubes::setData(const vector <float> &d) {
 	for (int i = 0; i < numxyz; i++) {
 		data[i] = d[i];
 	}
-	
+
 }
+
+
 
 
 
@@ -518,9 +505,10 @@ void ofxMarchingCubes::setData(const vector <float> &d) {
 
 void ofxMarchingCubes::addData(const vector <float> &d) {
 	for (int i = 0; i < numxyz; i++) {
-		data[i] += d[i];
+		// data[i] += d[i];
+		addDataIdx(i,d[i]);
 	}
-	
+
 }
 
 
@@ -534,7 +522,7 @@ void ofxMarchingCubes::multData(const float d) {
 	for (int i = 0; i < numxyz; i++) {
 		data[i] *= d;
 	}
-	
+
 }
 
 
@@ -549,7 +537,7 @@ void ofxMarchingCubes::normalizeDataTo(const float val) {
 	float dist = themax - themin;
 	float dst = val / dist;// 1.0f / v;
 	multData(dst);
-	
+
 }
 
 
@@ -566,11 +554,11 @@ void ofxMarchingCubes::dataInvert() {
 			max = data[i];
 		}
 	}
-	
+
 	for (int i = 0; i < numxyz; i++) {
 		data[i] = max - data[i];
 	}
-	
+
 }
 
 
@@ -584,7 +572,7 @@ void ofxMarchingCubes::dataSubs(const float v) {
 	for (int i = 0; i < numxyz; i++) {
 		data[i] = v - data[i];
 	}
-	
+
 }
 
 
@@ -606,12 +594,12 @@ vector <float> & ofxMarchingCubes::getData() {
 
 
 void ofxMarchingCubes::setDataXY(const vector <float> &d) {
-	
+
 	int locz = mcZhead * gxgy;
 	for(int i=0; i<gxgy;i++){
 		data[locz+i] = d[i];
-	}	
-	
+	}
+
 }
 
 
@@ -622,12 +610,12 @@ void ofxMarchingCubes::setDataXY(const vector <float> &d) {
 
 
 void ofxMarchingCubes::addDataXY(const vector <float> &d) {
-	
+
 	int locz = mcZhead * gxgy;
 	for(int i=0; i<gxgy;i++){
-		data[locz+i] += d[i];
-	}	
-	
+		addDataIdx(locz+i, d[i]);
+	}
+
 }
 
 
@@ -638,7 +626,7 @@ void ofxMarchingCubes::addDataXY(const vector <float> &d) {
 
 
 void ofxMarchingCubes::setDataZSpeed(const float speed){
-	mcZheadSpeed = speed;	
+	mcZheadSpeed = speed;
 }
 
 
@@ -656,7 +644,7 @@ void ofxMarchingCubes::updateDataZspeed(){
 	if(mcZheadf<0){
 		mcZheadf+=mcZMax;
 	}
-	
+
 	mcZhead = mcZheadf;
 }
 
@@ -667,13 +655,34 @@ void ofxMarchingCubes::updateDataZspeed(){
 
 
 
+void ofxMarchingCubes::setInvertNormals(bool b) {
+
+	invertnormals = b;
+	calcNormals();
+}
+
+void ofxMarchingCubes::calcNormals() {
+
+	for(size_t i=0; i <	trilist.size(); i++){
+		trilist[i].calcnormal(invertnormals, true);
+	}
+
+}
+
 void ofxMarchingCubes::polygoniseData() {
 	// Polygonise the grid
+	bool o=om>0;
 	ntri = 0;
 	trilist.clear();
+	triangles.clear();
 	for (int i = 0; i < gx - 1; i++) {
 		for (int j = 0; j < gy - 1; j++) {
 			for (int k = 0; k < gz - 1; k++) {
+
+//	for (int i = 2; i < gx - 2; i++) {
+//		for (int j = 2; j < gy - 2; j++) {
+//			for (int k = 0; k < gz - 1; k++) {
+
 				grid.p[0].x = i * datastride.x;
 				grid.p[0].y = j * datastride.y;
 				grid.p[0].z = k * datastride.z;
@@ -706,25 +715,83 @@ void ofxMarchingCubes::polygoniseData() {
 				grid.p[7].y = (j + 1) * datastride.y;
 				grid.p[7].z = (k + 1) * datastride.z;
 				grid.val[7] = data[i + (j + 1) * gx + (k + 1) * gxgy];
-				
-				int n = Polygonize(grid, isolevel, triangles);
-				
-				// calc tri norms
-				for (int a0 = 0; a0 < n; a0++) {
-					triangles[a0].calcnormal(invertnormals, normalize);
+
+				int n = 0;
+				if (o==false){
+
+					n = Polygonize(grid, isolevel, triangles);
+
+					// calc tri norms
+					for (int a0 = 0; a0 < n; a0++) {
+						triangles[a0].calcnormal(invertnormals, normalize);
+					}
+
+					for (int l = 0; l < n; l++) { trilist.push_back(mTriangle(triangles[l]));}
+
+					ntri += n;
+
 				}
-				
-				
-				for (int l = 0; l < n; l++) {
-					mTriangle tri( triangles[l] );
-					trilist.push_back(tri);
+				else {
+
+					n = PolygoniseTri(grid,isolevel,triangles, 0,2,3,7);
+					{
+						for (int a0 = 0; a0 < n; a0++) { triangles[a0].calcnormal(invertnormals, normalize); }
+						for (int l = 0; l < n; l++) { trilist.push_back(mTriangle(triangles[l]));}
+						ntri += n;
+					}
+
+					n = PolygoniseTri(grid,isolevel,triangles, 0,2,6,7);
+					{
+						for (int a0 = 0; a0 < n; a0++) { triangles[a0].calcnormal(invertnormals, normalize); }
+						for (int l = 0; l < n; l++) { trilist.push_back(mTriangle(triangles[l]));}
+						ntri += n;
+					}
+
+
+					n = PolygoniseTri(grid,isolevel,triangles, 0,4,6,7);
+					{
+						for (int a0 = 0; a0 < n; a0++) { triangles[a0].calcnormal(invertnormals, normalize); }
+						for (int l = 0; l < n; l++) { trilist.push_back(mTriangle(triangles[l]));}
+						ntri += n;
+					}
+
+					n = PolygoniseTri(grid,isolevel,triangles, 0,6,1,2);
+					{
+						for (int a0 = 0; a0 < n; a0++) { triangles[a0].calcnormal(invertnormals, normalize); }
+						for (int l = 0; l < n; l++) { trilist.push_back(mTriangle(triangles[l]));}
+						ntri += n;
+					}
+
+
+
+					n = PolygoniseTri(grid,isolevel,triangles, 0,6,1,4);
+					{
+						for (int a0 = 0; a0 < n; a0++) { triangles[a0].calcnormal(invertnormals, normalize); }
+						for (int l = 0; l < n; l++) { trilist.push_back(mTriangle(triangles[l]));}
+						ntri += n;
+					}
+
+
+
+					n = PolygoniseTri(grid,isolevel,triangles, 5,6,1,4);
+					{
+						for (int a0 = 0; a0 < n; a0++) { triangles[a0].calcnormal(invertnormals, normalize); }
+						for (int l = 0; l < n; l++) { trilist.push_back(mTriangle(triangles[l]));}
+						ntri += n;
+					}
+
+
+
 				}
-				ntri += n;
+
+
 			}
 		}
 	}
+
+
 	// println("Total of triangles: "+ntri);
-	
+
 	// Now do something with the triangles ....
 	// Here I just write them to a geom file
 	// http://local.wasp.uwa.edu.au/~pbourke/dataformats/geom/
@@ -741,7 +808,7 @@ void ofxMarchingCubes::polygoniseData() {
 	// fprintf(fptr,"0.5 0.5 0.5\n"); // colour
 	// }
 	// fclose(fptr);
-	
+
 }
 
 
@@ -760,7 +827,7 @@ bool ofxMarchingCubes::isEmpty() {
 		}
 	}
 	return empty;
-	
+
 }
 
 
@@ -780,8 +847,8 @@ void ofxMarchingCubes::checkMinMax() {
 		if (data[i] < themin) {
 			themin = data[i];
 		}
-	}	
-	
+	}
+
 }
 
 
@@ -791,8 +858,8 @@ void ofxMarchingCubes::checkMinMax() {
 //GLfloat tri[12];
 
 
-void ofxMarchingCubes::draw() {
-	
+ void ofxMarchingCubes::draw(ofPolyRenderMode drawMode) {
+
 	vector<float> tripts, normpts;
 	for(int i=0; i<trilist.size(); i++){
 		normpts.push_back(trilist[i].n.x);
@@ -812,16 +879,17 @@ void ofxMarchingCubes::draw() {
 		tripts.push_back(trilist[i].p[2].y);
 		tripts.push_back(trilist[i].p[2].z);
 	}
-	
+
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glNormalPointer(GL_FLOAT, 0, &normpts[0]);
 	glVertexPointer(3, GL_FLOAT, 0, &tripts[0]);
 	glDrawArrays(GL_TRIANGLES, 0, (int)trilist.size()*3);
+//	glDrawArrays(GL_LINES, 0, (int)trilist.size()*3);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
-	
-	
+
+
 //	for(int i=0; i<trilist.size(); i++){
 //		mTriangle &tri = trilist[i];
 //		glBegin(GL_TRIANGLES);
@@ -835,21 +903,56 @@ void ofxMarchingCubes::draw() {
 
 
 
+// void ofxMarchingCubes::drawwireframe() {
+//
+// 	// vector<float> tripts;
+// 	// for(int i=0; i<trilist.size(); i++){
+// 	// 	tripts.push_back(trilist[i].p[0].x);
+// 	// 	tripts.push_back(trilist[i].p[0].y);
+// 	// 	tripts.push_back(trilist[i].p[0].z);
+// 	// 	tripts.push_back(trilist[i].p[1].x);
+// 	// 	tripts.push_back(trilist[i].p[1].y);
+// 	// 	tripts.push_back(trilist[i].p[1].z);
+// 	// 	tripts.push_back(trilist[i].p[2].x);
+// 	// 	tripts.push_back(trilist[i].p[2].y);
+// 	// 	tripts.push_back(trilist[i].p[2].z);
+// 	// 	tripts.push_back(trilist[i].p[0].x);
+// 	// 	tripts.push_back(trilist[i].p[0].y);
+// 	// 	tripts.push_back(trilist[i].p[0].z);
+// 	// }
+//     //
+// 	// glEnableClientState(GL_VERTEX_ARRAY);
+//     //
+// 	// glVertexPointer(4, GL_FLOAT, 0, &tripts[0]);
+// 	// glDrawArrays(GL_LINES, 0, (int)trilist.size()*4);
+// 	// glDisableClientState(GL_VERTEX_ARRAY);
+//     //
+//
+// 		for(int i=0; i<trilist.size(); i++){
+// 			mTriangle &tri = trilist[i];
+// 			glBegin(GL_TRIANGLES);
+// 			glNormal3f( tri.n.x, tri.n.y, tri.n.z );
+// 			glVertex3f( tri.p[0].x, tri.p[0].y, tri.p[0].z );
+// 			glVertex3f( tri.p[1].x, tri.p[1].y, tri.p[1].z );
+// 			glVertex3f( tri.p[2].x, tri.p[2].y, tri.p[2].z );
+// 			glEnd();
+// 		}
+// }
+
 
 
 
 
 void ofxMarchingCubes::drawnormals(const float s) {
-	
-	
-	
+
+
 	const float one3 = 1.0f/3.0f;
-	
+
 	vector<float> linepts;
 	for(int i=0; i<trilist.size(); i++){
 		float x = (trilist[i].p[0].x + trilist[i].p[1].x + trilist[i].p[2].x) *one3;
 		float y = (trilist[i].p[0].y + trilist[i].p[1].y + trilist[i].p[2].y) *one3;
-		float z = (trilist[i].p[0].z + trilist[i].p[1].z + trilist[i].p[2].z) *one3;		
+		float z = (trilist[i].p[0].z + trilist[i].p[1].z + trilist[i].p[2].z) *one3;
 		linepts.push_back(x);
 		linepts.push_back(y);
 		linepts.push_back(z);
@@ -857,25 +960,25 @@ void ofxMarchingCubes::drawnormals(const float s) {
 		linepts.push_back(y+s*trilist[i].n.y);
 		linepts.push_back(z+s*trilist[i].n.z);
 	}
-	
+
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, &linepts[0]);
 	glDrawArrays(GL_LINES, 0, (int)trilist.size()*2);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	
+
 //	for (int i = 0; i < trilist.size(); i++) {
 //		mTriangle &tri = trilist[i];
 //		float x = (tri.p[0].x + tri.p[1].x + tri.p[2].x) *one3;
 //		float y = (tri.p[0].y + tri.p[1].y + tri.p[2].y) *one3;
 //		float z = (tri.p[0].z + tri.p[1].z + tri.p[2].z) *one3;
-//				
+//
 //		glBegin(GL_LINES);
 //		glVertex3f( x,y,z );
 //		glVertex3f( x + tri.n.x * s, y + tri.n.y * s, z + tri.n.z * s );
 //		glEnd();
-//		
+//
 //	}
-	
+
 }
 
 
@@ -884,12 +987,13 @@ void ofxMarchingCubes::drawnormals(const float s) {
 
 
 void ofxMarchingCubes::readStl(const string &fn) {
-	readBinaryStl(fn);	
+	readBinaryStl(fn);
+	calcNormals();
 }
 
 
 void ofxMarchingCubes::saveStl(const string &fn) {
-	saveBinaryStl(fn);	
+	saveBinaryStl(fn);
 }
 
 
@@ -897,7 +1001,7 @@ void ofxMarchingCubes::saveStl(const string &fn) {
 void ofxMarchingCubes::saveBinaryStl(const string &fn) {
 	//		UINT8[80] – Header
 	//		UINT32 – Number of triangles
-	//		
+	//
 	//		foreach triangle
 	//		REAL32[3] – Normal vector
 	//		REAL32[3] – Vertex 1
@@ -905,75 +1009,75 @@ void ofxMarchingCubes::saveBinaryStl(const string &fn) {
 	//		REAL32[3] – Vertex 3
 	//		UINT16 – Attribute byte count
 	//		end
-	
+
 	ofstream myfile;
 	myfile.open (ofToDataPath(fn).c_str(), ios::binary );
-	
+
 	myfile.precision(4);
-	
+
 	myfile.write(header.c_str(), sizeof(char)*80);
-	
+
 	short atribute = 0;
-	
+
 	int numt=trilist.size();
 	myfile.write((char *)&numt,sizeof(int));
-	
-	
-	for(int i=0; i<trilist.size();i++){		
-		mTriangle &t = trilist[i];		
+
+
+	for(int i=0; i<trilist.size();i++){
+		mTriangle &t = trilist[i];
 		myfile.write((char *)&t.n.x,sizeof(float));
 		myfile.write((char *)&t.n.y,sizeof(float));
-		myfile.write((char *)&t.n.z,sizeof(float));		
+		myfile.write((char *)&t.n.z,sizeof(float));
 		myfile.write((char *)&t.p[2].x,sizeof(float));
 		myfile.write((char *)&t.p[2].y,sizeof(float));
-		myfile.write((char *)&t.p[2].z,sizeof(float));		
+		myfile.write((char *)&t.p[2].z,sizeof(float));
 		myfile.write((char *)&t.p[1].x,sizeof(float));
 		myfile.write((char *)&t.p[1].y,sizeof(float));
-		myfile.write((char *)&t.p[1].z,sizeof(float));		
+		myfile.write((char *)&t.p[1].z,sizeof(float));
 		myfile.write((char *)&t.p[0].x,sizeof(float));
 		myfile.write((char *)&t.p[0].y,sizeof(float));
-		myfile.write((char *)&t.p[0].z,sizeof(float));		
-		myfile.write((char *)&atribute,sizeof(short));		
+		myfile.write((char *)&t.p[0].z,sizeof(float));
+		myfile.write((char *)&atribute,sizeof(short));
 	}
-	
-//	myfile.write(header.c_str(), sizeof(char)*80);		
+
+//	myfile.write(header.c_str(), sizeof(char)*80);
 	myfile.close();
-	
+
 	cout << "ofxMarchingCubes saved binary " << fn << " tris: "<< trilist.size() <<  endl;
-	
-	
+
+
 }
 
 void ofxMarchingCubes::readBinaryStl(const string &fn) {
 
-	string file = ofToDataPath(fn, true);	
-	ifstream stl_file(file.c_str(), ios::in | ios::binary);		
-	
+	string file = ofToDataPath(fn, true);
+	ifstream stl_file(file.c_str(), ios::in | ios::binary);
+
 	if(!stl_file.is_open()){
-		cout << "ofxMarchingCubes: could not read file " << file << endl;		
-	}else{		
-		int	through = 0;		
-		char h[80];		
-		for(int i=0;i<80;i++){ stl_file.read((char *)&h[i], sizeof(char)); }		
-		cout << h << endl;
-		
+		cout << "ofxMarchingCubes: could not read file " << file << endl;
+	}else{
+		int	through = 0;
+		char h[80];
+		for(int i=0;i<80;i++){ stl_file.read((char *)&h[i], sizeof(char)); }
+		// cout << h << endl;
+
 		int numtris;
 		stl_file.read((char *)&numtris, sizeof(int));
-		
-		cout << "ofxMarchingCubes reading binary stl " << fn << " numtris = " << ofToString(numtris) << endl;
-		
+
+		// cout << "ofxMarchingCubes reading binary stl " << fn << " numtris = " << ofToString(numtris) << endl;
+
 		trilist.clear();
-		
+
 		while ((through < numtris))// && (!stl_file.eof()))
 		{
 			float	floats[12];
 			short	attribute;
-			
+
 			for (int i=0; i<12; i++) {
 				stl_file.read((char *)&floats[i], sizeof(float));
 			}
 			stl_file.read((char *)&attribute, sizeof(short));
-						
+
 			// add triangles
 			mTriangle tri;
 			tri.n.x = floats[0];
@@ -989,9 +1093,9 @@ void ofxMarchingCubes::readBinaryStl(const string &fn) {
 			tri.p[0].y = floats[10];
 			tri.p[0].z = floats[11];
 			trilist.push_back(tri);
-			
+
 			through++;
-			
+
 //			if(through%1000==0){
 //				cout << "adding tri " << through << " " << floats << ": ";
 //				for(int i=0; i<12; i++){
@@ -999,18 +1103,18 @@ void ofxMarchingCubes::readBinaryStl(const string &fn) {
 //				}
 //				cout << endl;
 //			}
-			
-		}
-		
-		stl_file.close();
-		
-		
-		
-	}
-	
-	
 
-	
+		}
+
+		stl_file.close();
+
+
+
+	}
+
+
+
+
 }
 
 
@@ -1018,20 +1122,20 @@ void ofxMarchingCubes::readBinaryStl(const string &fn) {
 
 // void ofxMarchingCubes::readAsciiStl(string fn) {
 // 	// phps binary is enough
-	
+
 // 	ifstream stl_file (fn.c_str(), ios::in );
 
-	
+
 
 // 	trilist.clear();
-	
+
 // 	while (!stl_file.eof()) {
 // 		float floats[12];
-		
+
 // 	}
-	
+
 // //	for(int i=0; i<trilist.size();i++){
-// //		
+// //
 // //		mTriangle &t = trilist[i];
 // //		myfile << "facet normal "<< t.n.x << " " << t.n.y << " " << t.n.z << "\n";
 // //		myfile << "outer loop" << "\n";
@@ -1041,14 +1145,14 @@ void ofxMarchingCubes::readBinaryStl(const string &fn) {
 // //		myfile << "end loop" << "\n";
 // //		myfile << "endfacet" << "\n";
 // //	}
-// //	
+// //
 // //	myfile << "endsolid "<<name << "\n";
 // //	myfile.close();
-// //	
+// //
 // //	cout << "ofxMarchingCubes saved ascii " << fn << "tris: "<< trilist.size() <<  endl;
-	
-	
-	
+
+
+
 // }
 
 
@@ -1060,13 +1164,13 @@ void ofxMarchingCubes::readBinaryStl(const string &fn) {
 //
 //	ofstream myfile;
 //	myfile.open (ofToDataPath(fn).c_str());
-//	
+//
 //	string name = "s373-" + fn;
-//	
+//
 //	myfile << "solid "<<name << "\n";
 //
 //	for(int i=0; i<trilist.size();i++){
-//	
+//
 //		mTriangle &t = trilist[i];
 //		myfile << "facet normal "<< t.n.x << " " << t.n.y << " " << t.n.z << "\n";
 //		myfile << "outer loop" << "\n";
@@ -1076,14 +1180,14 @@ void ofxMarchingCubes::readBinaryStl(const string &fn) {
 //		myfile << "end loop" << "\n";
 //		myfile << "endfacet" << "\n";
 //	}
-//	
+//
 //	myfile << "endsolid "<<name << "\n";
 //	myfile.close();
-//	
-//	cout << "ofxMarchingCubes saved ascii " << fn << "tris: "<< trilist.size() <<  endl;
-//	
 //
-//	
+//	cout << "ofxMarchingCubes saved ascii " << fn << "tris: "<< trilist.size() <<  endl;
+//
+//
+//
 //}
 
 
@@ -1092,8 +1196,8 @@ void ofxMarchingCubes::readBinaryStl(const string &fn) {
 
 
 
-	
- int	ofxMarchingCubes::Polygonize(const mGridCell grid,const float isolevel,  vector <mTriangle> &triangles) {
+
+ int	ofxMarchingCubes::Polygonize(const mGridCell &grid,const float isolevel,  vector <mTriangle> &triangles) {
 	int i, ntriang;
 	int cubeindex;
 	ofPoint vertlist[12];// = new ofPoint[12];
@@ -1126,12 +1230,12 @@ void ofxMarchingCubes::readBinaryStl(const string &fn) {
 	if (grid.val[7] < isolevel) {
 		cubeindex |= 128;
 	}
-	
+
 	/* Cube is entirely in/out of the surface */
 	if (edgeTable[cubeindex] == 0) {
 		return (0);
 	}
-	
+
 	/* Find the vertices where the surface intersects the cube */
 	// int temp = edgeTable[cubeindex] & 1;
 	if ((edgeTable[cubeindex] & 1) != 0) {
@@ -1182,7 +1286,7 @@ void ofxMarchingCubes::readBinaryStl(const string &fn) {
 		vertlist[11] = VertexInterp(isolevel, grid.p[3], grid.p[7],
 									grid.val[3], grid.val[7]);
 	}
-	
+
 	/* Create the triangle */
 	ntriang = 0;
 	for (i = 0; triTable[cubeindex][i] != -1; i += 3) {
@@ -1191,9 +1295,9 @@ void ofxMarchingCubes::readBinaryStl(const string &fn) {
 		triangles[ntriang].p[2] = vertlist[triTable[cubeindex][i + 2]];
 		ntriang++;
 	}
-	
+
 	return (ntriang);
-	
+
 }
 
 
@@ -1206,7 +1310,7 @@ ofVec3f ofxMarchingCubes::VertexInterp(const float isolevel,const  ofVec3f &p1,c
 	float mu;
 	ofPoint p(0,0,0);
 	float ep = 0.00001;
-	
+
 	if (ABS(isolevel - valp1) < ep) {
 		return (p1);
 	}
@@ -1220,7 +1324,7 @@ ofVec3f ofxMarchingCubes::VertexInterp(const float isolevel,const  ofVec3f &p1,c
 	p.x = p1.x + mu * (p2.x - p1.x);
 	p.y = p1.y + mu * (p2.y - p1.y);
 	p.z = p1.z + mu * (p2.z - p1.z);
-	
+
 	return (p);
 }
 
@@ -1230,7 +1334,7 @@ ofVec3f ofxMarchingCubes::VertexInterp(const float isolevel,const  ofVec3f &p1,c
 
 
  int ofxMarchingCubes::getIndex(const ofPoint &ptpos) {
-	int cx = (int) (ptpos.x * worldstride.x); 
+	int cx = (int) (ptpos.x * worldstride.x);
 	int cy = (int) (ptpos.y * worldstride.y);
 	int cz = (int) (ptpos.z * worldstride.z);
 	if (closesides) {
@@ -1272,9 +1376,157 @@ ofVec3f ofxMarchingCubes::VertexInterp(const float isolevel,const  ofVec3f &p1,c
 			cz = gz - 1;
 		}
 	}
-	
+
 	 int idx = cx + cy * gx + cz * gxgy;
 	// idx = ofClamp(idx, 0, numxyz-1);
-	 
-	return idx;	
+
+	return idx;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// typedef struct {
+//    double x,y,z;
+// } XYZ;
+// typedef struct {
+//    XYZ p[3];
+// } TRIANGLE;
+// typedef struct {
+//    XYZ p[8];
+//    double val[8];
+// } GRIDCELL;
+
+/*
+   Polygonise a tetrahedron given its vertices within a cube
+   This is an alternative algorithm to polygonisegrid.
+   It results in a smoother surface but more triangular facets.
+
+                      + 0
+                     /|\
+                    / | \
+                   /  |  \
+                  /   |   \
+                 /    |    \
+                /     |     \
+               +-------------+ 1
+              3 \     |     /
+                 \    |    /
+                  \   |   /
+                   \  |  /
+                    \ | /
+                     \|/
+                      + 2
+
+   It's main purpose is still to polygonise a gridded dataset and
+   would normally be called 6 times, one for each tetrahedron making
+   up the grid cell.
+   Given the grid labelling as in PolygniseGrid one would call
+      PolygoniseTri(grid,iso,triangles,0,2,3,7);
+      PolygoniseTri(grid,iso,triangles,0,2,6,7);
+      PolygoniseTri(grid,iso,triangles,0,4,6,7);
+      PolygoniseTri(grid,iso,triangles,0,6,1,2);
+      PolygoniseTri(grid,iso,triangles,0,6,1,4);
+      PolygoniseTri(grid,iso,triangles,5,6,1,4);
+*/
+int ofxMarchingCubes::PolygoniseTri(const mGridCell & g,const float iso, vector <mTriangle> &tri, int v0,int v1,int v2,int v3)
+{
+   int ntri = 0;
+   int triindex;
+
+   /*
+      Determine which of the 16 cases we have given which vertices
+      are above or below the isosurface
+   */
+   triindex = 0;
+   if (g.val[v0] < iso) triindex |= 1;
+   if (g.val[v1] < iso) triindex |= 2;
+   if (g.val[v2] < iso) triindex |= 4;
+   if (g.val[v3] < iso) triindex |= 8;
+
+   /* Form the vertices of the triangles for each case */
+   switch (triindex) {
+   case 0x00:
+   case 0x0F:
+      break;
+   case 0x0E:
+   case 0x01:
+      tri[0].p[0] = VertexInterp(iso,g.p[v0],g.p[v1],g.val[v0],g.val[v1]);
+      tri[0].p[1] = VertexInterp(iso,g.p[v0],g.p[v2],g.val[v0],g.val[v2]);
+      tri[0].p[2] = VertexInterp(iso,g.p[v0],g.p[v3],g.val[v0],g.val[v3]);
+      ntri++;
+      break;
+   case 0x0D:
+   case 0x02:
+      tri[0].p[0] = VertexInterp(iso,g.p[v1],g.p[v0],g.val[v1],g.val[v0]);
+      tri[0].p[1] = VertexInterp(iso,g.p[v1],g.p[v3],g.val[v1],g.val[v3]);
+      tri[0].p[2] = VertexInterp(iso,g.p[v1],g.p[v2],g.val[v1],g.val[v2]);
+      ntri++;
+      break;
+   case 0x0C:
+   case 0x03:
+      tri[0].p[0] = VertexInterp(iso,g.p[v0],g.p[v3],g.val[v0],g.val[v3]);
+      tri[0].p[1] = VertexInterp(iso,g.p[v0],g.p[v2],g.val[v0],g.val[v2]);
+      tri[0].p[2] = VertexInterp(iso,g.p[v1],g.p[v3],g.val[v1],g.val[v3]);
+      ntri++;
+      tri[1].p[0] = tri[0].p[2];
+      tri[1].p[1] = VertexInterp(iso,g.p[v1],g.p[v2],g.val[v1],g.val[v2]);
+      tri[1].p[2] = tri[0].p[1];
+      ntri++;
+      break;
+   case 0x0B:
+   case 0x04:
+      tri[0].p[0] = VertexInterp(iso,g.p[v2],g.p[v0],g.val[v2],g.val[v0]);
+      tri[0].p[1] = VertexInterp(iso,g.p[v2],g.p[v1],g.val[v2],g.val[v1]);
+      tri[0].p[2] = VertexInterp(iso,g.p[v2],g.p[v3],g.val[v2],g.val[v3]);
+      ntri++;
+      break;
+   case 0x0A:
+   case 0x05:
+      tri[0].p[0] = VertexInterp(iso,g.p[v0],g.p[v1],g.val[v0],g.val[v1]);
+      tri[0].p[1] = VertexInterp(iso,g.p[v2],g.p[v3],g.val[v2],g.val[v3]);
+      tri[0].p[2] = VertexInterp(iso,g.p[v0],g.p[v3],g.val[v0],g.val[v3]);
+      ntri++;
+      tri[1].p[0] = tri[0].p[0];
+      tri[1].p[1] = VertexInterp(iso,g.p[v1],g.p[v2],g.val[v1],g.val[v2]);
+      tri[1].p[2] = tri[0].p[1];
+      ntri++;
+      break;
+   case 0x09:
+   case 0x06:
+      tri[0].p[0] = VertexInterp(iso,g.p[v0],g.p[v1],g.val[v0],g.val[v1]);
+      tri[0].p[1] = VertexInterp(iso,g.p[v1],g.p[v3],g.val[v1],g.val[v3]);
+      tri[0].p[2] = VertexInterp(iso,g.p[v2],g.p[v3],g.val[v2],g.val[v3]);
+      ntri++;
+      tri[1].p[0] = tri[0].p[0];
+      tri[1].p[1] = VertexInterp(iso,g.p[v0],g.p[v2],g.val[v0],g.val[v2]);
+      tri[1].p[2] = tri[0].p[2];
+      ntri++;
+      break;
+   case 0x07:
+   case 0x08:
+      tri[0].p[0] = VertexInterp(iso,g.p[v3],g.p[v0],g.val[v3],g.val[v0]);
+      tri[0].p[1] = VertexInterp(iso,g.p[v3],g.p[v2],g.val[v3],g.val[v2]);
+      tri[0].p[2] = VertexInterp(iso,g.p[v3],g.p[v1],g.val[v3],g.val[v1]);
+      ntri++;
+      break;
+   }
+
+   return(ntri);
 }
